@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyMind AI</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@600;700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface-2: #1a1e28;
+      --border: #252a36;
+      --text: #e8eaef;
+      --text-muted: #8b92a5;
+      --accent: #6c63ff;
+      --accent-dim: rgba(108, 99, 255, 0.15);
+      --green: #22d3a3;
+      --red: #f87171;
+      --amber: #fbbf24;
+      --purple-dot: #a78bfa;
+      --sidebar-w: 240px;
+      --panel-w: 260px;
+    }
+
+    html {
+      height: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    h1, h2, h3, h4, .logo, .mode-title { font-family: 'Syne', sans-serif; }
+
+    /* ── Layout ── */
+    .app {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr var(--panel-w);
+      grid-template-rows: 56px minmax(0, 1fr);
+      min-height: 100dvh;
+      height: 100dvh;
+    }
+
+    /* ── Header ── */
+    .header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 16px; }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .badge-online {
+      background: rgba(34, 211, 163, 0.12);
+      color: var(--green);
+      border: 1px solid rgba(34, 211, 163, 0.25);
+    }
+
+    .badge-online::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .badge-model {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(108, 99, 255, 0.3);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+
+    .modes { padding: 12px 10px; display: flex; flex-direction: column; gap: 6px; }
+
+    .mode-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .mode-btn:hover { background: var(--surface-2); }
+
+    .mode-btn.active {
+      background: var(--accent-dim);
+      box-shadow: 0 0 20px rgba(108, 99, 255, 0.2), inset 0 0 0 1px rgba(108, 99, 255, 0.3);
+    }
+
+    .mode-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .mode-btn.active .mode-icon { background: rgba(108, 99, 255, 0.2); }
+
+    .mode-text { min-width: 0; }
+    .mode-text .title { font-weight: 600; font-size: 13px; display: block; }
+    .mode-text .subtitle { font-size: 11px; color: var(--text-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .history-section {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .history-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      padding: 8px 4px;
+    }
+
+    .history-item {
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background 0.15s;
+    }
+
+    .history-item:hover { background: var(--surface-2); color: var(--text); }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .avatar-ai { background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff; }
+    .avatar-user { background: var(--accent); color: #fff; }
+
+    .user-info .name { font-weight: 600; font-size: 13px; }
+    .user-info .role { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Main Chat ── */
+    .main {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .mode-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .mode-header-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .mode-header-text h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .mode-header-text p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .chip {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .messages {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      display: flex;
+      gap: 10px;
+      max-width: 85%;
+      animation: fadeUp 0.35s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .message-content { flex: 1; min-width: 0; }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .bubble-ai {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top-left-radius: 4px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .bubble-ai h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      margin: 12px 0 6px;
+      color: var(--accent);
+    }
+
+    .bubble-ai h4:first-child { margin-top: 0; }
+
+    .bubble-ai p { margin-bottom: 8px; }
+    .bubble-ai p:last-child { margin-bottom: 0; }
+    .bubble-ai ul { margin: 8px 0 8px 18px; }
+    .bubble-ai li { margin-bottom: 4px; }
+    .bubble-ai strong { color: var(--text); }
+
+    .bubble-user {
+      background: var(--accent);
+      color: #fff;
+      border-top-right-radius: 4px;
+    }
+
+    .timestamp {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    .message.user .timestamp { text-align: right; }
+
+    /* Plan card table */
+    .plan-card {
+      background: var(--surface-2);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 12px 0;
+      border: 1px solid var(--border);
+    }
+
+    .plan-card table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .plan-card th {
+      background: rgba(108, 99, 255, 0.15);
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .plan-card td {
+      padding: 8px 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .plan-card tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+    /* Action buttons in AI responses */
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .action-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(108, 99, 255, 0.4);
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .action-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 10px;
+      max-width: 85%;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      border-top-left-radius: 4px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .typing-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-8px); opacity: 1; }
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 12px 24px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .quick-prompts {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .quick-prompts::-webkit-scrollbar { display: none; }
+
+    .prompt-chip {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .prompt-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .textarea-wrap { flex: 1; position: relative; }
+
+    #messageInput {
+      width: 100%;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      line-height: 1.5;
+      transition: border-color 0.2s;
+    }
+
+    #messageInput:focus { border-color: var(--accent); }
+    #messageInput::placeholder { color: var(--text-muted); }
+
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .send-btn:hover:not(:disabled) { background: #5a52e0; transform: scale(1.05); }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .send-btn.loading {
+      pointer-events: none;
+    }
+
+    .send-btn.loading svg {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .input-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ── Right Panel ── */
+    .panel {
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-section h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stat-card {
+      background: var(--surface-2);
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .stat-value.purple { color: var(--accent); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.amber { color: var(--amber); }
+    .stat-value.red { color: var(--red); }
+
+    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .progress-item { margin-bottom: 12px; }
+    .progress-item:last-child { margin-bottom: 0; }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      transition: width 0.5s ease;
+    }
+
+    .deadline-list { list-style: none; }
+
+    .deadline-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .deadline-item:last-child { border-bottom: none; }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-red { background: var(--red); }
+    .dot-amber { background: var(--amber); }
+    .dot-green { background: var(--green); }
+    .dot-purple { background: var(--purple-dot); }
+
+    .deadline-text { flex: 1; }
+    .deadline-date { color: var(--text-muted); font-size: 11px; }
+
+    .tip-card {
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.25), rgba(108, 99, 255, 0.08));
+      border: 1px solid rgba(108, 99, 255, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .tip-card .tip-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .tip-card p { font-size: 13px; line-height: 1.5; }
+
+    .error-bubble {
+      border-left-color: var(--red) !important;
+      color: var(--red);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a4050; }
+
+    /* Mobile & narrow: page scroll, stacked layout */
+    @media (max-width: 960px) {
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 100dvh;
+      }
+
+      .header {
+        position: sticky;
+        top: 0;
+        flex-shrink: 0;
+      }
+
+      .sidebar,
+      .main,
+      .panel {
+        min-height: auto;
+        overflow: visible;
+        flex-shrink: 0;
+      }
+
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: none;
+      }
+
+      .history-section {
+        max-height: 140px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .main {
+        flex: 1;
+        min-height: 60dvh;
+      }
+
+      .messages {
+        flex: 1 1 auto;
+        min-height: 45dvh;
+        max-height: none;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .panel {
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="logo">StudyMind AI</span>
+        <span class="badge badge-online">AI Online</span>
+        <span class="badge badge-model">gemini-2.5-flash</span>
+      </div>
+    </header>
+
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <nav class="modes" id="modeNav">
+        <button class="mode-btn active" data-mode="tutor">
+          <span class="mode-icon">🎓</span>
+          <span class="mode-text">
+            <span class="title">AI-тьютор</span>
+            <span class="subtitle">Объяснения и примеры</span>
+          </span>
+        </button>
+        <button class="mode-btn" data-mode="essay">
+          <span class="mode-icon">✍️</span>
+          <span class="mode-text">
+            <span class="title">Редактор эссе</span>
+            <span class="subtitle">Структура и аргументы</span>
+          </span>
+        </button>
+        <button class="mode-btn" data-mode="plan">
+          <span class="mode-icon">📅</span>
+          <span class="mode-text">
+            <span class="title">Планировщик</span>
+            <span class="subtitle">Расписание Pomodoro</span>
+          </span>
+        </button>
+        <button class="mode-btn" data-mode="test">
+          <span class="mode-icon">🧪</span>
+          <span class="mode-text">
+            <span class="title">Тест-тренажёр</span>
+            <span class="subtitle">Вопросы с обратной связью</span>
+          </span>
+        </button>
+      </nav>
+
+      <div class="history-section">
+        <div class="history-label">История чатов</div>
+        <div class="history-item">Машинное обучение — основы</div>
+        <div class="history-item">Эссе: глобализация экономики</div>
+        <div class="history-item">Подготовка к экзамену по матану</div>
+        <div class="history-item">Английский: Present Perfect</div>
+        <div class="history-item">План на сессию — 2 недели</div>
+      </div>
+
+      <div class="user-chip">
+        <span class="avatar avatar-user">АС</span>
+        <div class="user-info">
+          <div class="name">Айгерим С.</div>
+          <div class="role">Студент · КБТУ</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Chat -->
+    <main class="main">
+      <div class="mode-header" id="modeHeader">
+        <span class="mode-header-icon" id="modeHeaderIcon">🎓</span>
+        <div class="mode-header-text">
+          <h2 id="modeHeaderTitle">AI-тьютор</h2>
+          <p id="modeHeaderDesc">Объясняю сложные темы простым языком с аналогиями и примерами</p>
+          <div class="chips" id="modeHeaderChips"></div>
+        </div>
+      </div>
+
+      <div class="messages" id="messages"></div>
+
+      <div class="input-area">
+        <div class="quick-prompts" id="quickPrompts"></div>
+        <div class="input-row">
+          <div class="textarea-wrap">
+            <textarea id="messageInput" placeholder="Задайте вопрос..." rows="1"></textarea>
+          </div>
+          <button class="send-btn" id="sendBtn" aria-label="Отправить">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+        <div class="input-meta">
+          <span id="charCounter">0 / 2000</span>
+          <span>Powered by Gemini API</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Panel -->
+    <aside class="panel">
+      <section class="panel-section">
+        <h3>Статистика</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value purple">24</div>
+            <div class="stat-label">Сессий</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value green">18ч</div>
+            <div class="stat-label">Часов</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value amber">12</div>
+            <div class="stat-label">Тестов</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value red">87%</div>
+            <div class="stat-label">Средний балл</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <h3>Прогресс по предметам</h3>
+        <div class="progress-item">
+          <div class="progress-header"><span>Математика</span><span>72%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:72%"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-header"><span>Программирование</span><span>88%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-header"><span>Экономика</span><span>45%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-header"><span>Английский</span><span>60%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <h3>Дедлайны</h3>
+        <ul class="deadline-list">
+          <li class="deadline-item">
+            <span class="dot dot-red"></span>
+            <span class="deadline-text">Курсовая — ML</span>
+            <span class="deadline-date">20 мая</span>
+          </li>
+          <li class="deadline-item">
+            <span class="dot dot-amber"></span>
+            <span class="deadline-text">Экзамен по матану</span>
+            <span class="deadline-date">25 мая</span>
+          </li>
+          <li class="deadline-item">
+            <span class="dot dot-green"></span>
+            <span class="deadline-text">Эссе — экономика</span>
+            <span class="deadline-date">1 июня</span>
+          </li>
+          <li class="deadline-item">
+            <span class="dot dot-purple"></span>
+            <span class="deadline-text">IELTS mock test</span>
+            <span class="deadline-date">10 июня</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="panel-section">
+        <div class="tip-card">
+          <div class="tip-label">💡 Совет дня</div>
+          <p>Используйте технику Pomodoro: 25 минут учёбы + 5 минут отдыха. После 4 циклов — длинный перерыв 15–30 минут.</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    const API_KEY = '';
+    const MODES = {
+      tutor: {
+        icon: '🎓',
+        title: 'AI-тьютор',
+        desc: 'Объясняю сложные темы простым языком с аналогиями и примерами',
+        chips: ['Объяснения', 'Аналогии', 'Примеры', 'Пошагово'],
+        system: "Ты — AI-тьютор StudyMind AI для студентов. Объясняй темы простым языком, используй аналогии из повседневной жизни и конкретные примеры. Разбивай сложные концепции на шаги. Отвечай на русском языке. Будь дружелюбным и поддерживающим. Используй HTML-разметку: <h4>, <p>, <ul>, <li>, <strong> для структуры ответов. ВАЖНО: У тебя есть лимит длины ответа (около 3000 слов). Структурируй свой ответ так, чтобы он был логически завершенным и не обрывался."
+      },
+      essay: {
+        icon: '✍️',
+        title: 'Редактор эссе',
+        desc: 'Помогаю улучшить академическое письмо, структуру и аргументацию',
+        chips: ['Структура', 'Аргументы', 'Стиль', 'Редактура'],
+        system: "Ты — редактор академических эссе StudyMind AI. Помогай улучшать структуру (введение, тезис, аргументы, заключение), усиливать аргументацию, исправлять стиль и грамматику. Давай конкретные рекомендации. Отвечай на русском языке. Используй HTML: <h4>, <p>, <ul>, <li>, <strong>. ВАЖНО: У тебя есть лимит длины ответа (около 3000 слов). Структурируй свой ответ так, чтобы он был логически завершенным и не обрывался."
+      },
+      plan: {
+        icon: '📅',
+        title: 'Планировщик',
+        desc: 'Создаю детальные учебные расписания с техникой Pomodoro',
+        chips: ['Pomodoro', 'Расписание', 'Приоритеты', 'Дедлайны'],
+        system: "Ты — планировщик учёбы StudyMind AI. Создавай детальные расписания с техникой Pomodoro (25 мин работа + 5 мин отдых). Учитывай дедлайны, приоритеты и нагрузку. Предлагай реалистичные планы. Отвечай на русском. Используй HTML: <h4>, <p>, <ul>, <li>, <strong>, таблицы если уместно. ВАЖНО: У тебя есть лимит длины ответа (около 3000 слов). Структурируй свой ответ так, чтобы он был логически завершенным и не обрывался."
+      },
+      test: {
+        icon: '🧪',
+        title: 'Тест-тренажёр',
+        desc: 'Задаю вопросы по одному и даю обратную связь после каждого ответа',
+        chips: ['Викторина', 'Обратная связь', 'Повторение', 'Прогресс'],
+        system: "Ты — тест-тренажёр StudyMind AI. Задавай студенту ОДИН вопрос за раз по выбранной теме. После ответа давай развёрнутую обратную связь: правильно/неправильно, объяснение, совет. Затем задавай следующий вопрос. Отвечай на русском. Используй HTML: <h4>, <p>, <ul>, <li>, <strong>. ВАЖНО: У тебя есть лимит длины ответа (около 3000 слов). Структурируй свой ответ так, чтобы он был логически завершенным и не обрывался."
+      }
+    };
+
+    const QUICK_PROMPTS = {
+      tutor: [
+        'Объясни теорему Байеса простыми словами',
+        'Что такое градиентный спуск?',
+        'Как работает нейронная сеть?',
+        'Разница между SQL и NoSQL'
+      ],
+      essay: [
+        'Проверь введение моего эссе',
+        'Как усилить аргументацию?',
+        'Структура эссе на 1500 слов',
+        'Помоги с заключением'
+      ],
+      plan: [
+        'План подготовки к экзамену за 2 недели',
+        'Расписание на сегодня (6 часов)',
+        'Как совместить 4 предмета?',
+        'Pomodoro для курсовой'
+      ],
+      test: [
+        'Тест по основам Python',
+        'Вопросы по линейной алгебре',
+        'Проверь знания по экономике',
+        'Квиз по английской грамматике'
+      ]
+    };
+
+    let currentMode = 'tutor';
+    let conversationHistory = [];
+    let isLoading = false;
+    const messagesEl = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const charCounter = document.getElementById('charCounter');
+    const quickPromptsEl = document.getElementById('quickPrompts');
+
+    function formatTime(date = new Date()) {
+      return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function scrollToBottom() {
+      requestAnimationFrame(() => {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      });
+    }
+
+    function createMessageEl(role, html, time, isError = false) {
+      const wrap = document.createElement('div');
+      wrap.className = `message ${role}`;
+
+      const avatar = document.createElement('span');
+      avatar.className = `avatar ${role === 'ai' ? 'avatar-ai' : 'avatar-user'}`;
+      avatar.textContent = role === 'ai' ? 'SM' : 'АС';
+
+      const content = document.createElement('div');
+      content.className = 'message-content';
+
+      const bubble = document.createElement('div');
+      bubble.className = `bubble ${role === 'ai' ? 'bubble-ai' : 'bubble-user'}${isError ? ' error-bubble' : ''}`;
+      bubble.innerHTML = html;
+
+      const ts = document.createElement('div');
+      ts.className = 'timestamp';
+      ts.textContent = time;
+
+      content.appendChild(bubble);
+      content.appendChild(ts);
+      wrap.appendChild(avatar);
+      wrap.appendChild(content);
+
+      return wrap;
+    }
+
+    function bindActionButtons(container) {
+      container.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const text = btn.dataset.action || btn.textContent.trim();
+          sendMessage(text);
+        });
+      });
+    }
+
+    function appendMessage(role, html, time, isError = false) {
+      const el = createMessageEl(role, html, time, isError);
+      messagesEl.appendChild(el);
+      if (role === 'ai') bindActionButtons(el);
+      scrollToBottom();
+      return el;
+    }
+
+    function showTyping() {
+      const el = document.createElement('div');
+      el.className = 'typing-indicator';
+      el.id = 'typingIndicator';
+      el.innerHTML = `
+        <span class="avatar avatar-ai">SM</span>
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      `;
+      messagesEl.appendChild(el);
+      scrollToBottom();
+    }
+
+    function hideTyping() {
+      const el = document.getElementById('typingIndicator');
+      if (el) el.remove();
+    }
+
+    function setLoading(loading) {
+      isLoading = loading;
+      sendBtn.disabled = loading;
+      sendBtn.classList.toggle('loading', loading);
+      messageInput.disabled = loading;
+    }
+
+    function autoResizeTextarea() {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+    }
+
+    function updateCharCounter() {
+      const len = messageInput.value.length;
+      charCounter.textContent = `${len} / 2000`;
+    }
+
+    function renderQuickPrompts() {
+      quickPromptsEl.innerHTML = '';
+      (QUICK_PROMPTS[currentMode] || []).forEach(text => {
+        const chip = document.createElement('button');
+        chip.className = 'prompt-chip';
+        chip.textContent = text;
+        chip.addEventListener('click', () => {
+          messageInput.value = text;
+          autoResizeTextarea();
+          updateCharCounter();
+          messageInput.focus();
+        });
+        quickPromptsEl.appendChild(chip);
+      });
+    }
+
+    function updateModeHeader() {
+      const m = MODES[currentMode];
+      document.getElementById('modeHeaderIcon').textContent = m.icon;
+      document.getElementById('modeHeaderTitle').textContent = m.title;
+      document.getElementById('modeHeaderDesc').textContent = m.desc;
+      const chipsEl = document.getElementById('modeHeaderChips');
+      chipsEl.innerHTML = m.chips.map(c => `<span class="chip">${c}</span>`).join('');
+    }
+
+    function clearChat() {
+      messagesEl.innerHTML = '';
+      conversationHistory = [];
+    }
+
+    function loadWelcomeDemo() {
+      const welcomeHtml = `
+        <p>Привет! Я <strong>StudyMind AI</strong> — твой персональный помощник в учёбе. Вот чем могу помочь:</p>
+        <ul>
+          <li><strong>🎓 AI-тьютор</strong> — объясняю сложные темы простым языком</li>
+          <li><strong>✍️ Редактор эссе</strong> — улучшаю структуру и аргументацию</li>
+          <li><strong>📅 Планировщик</strong> — составляю расписание с Pomodoro</li>
+          <li><strong>🧪 Тест-тренажёр</strong> — тренирую через вопросы с обратной связью</li>
+        </ul>
+        <p>Выбери режим слева или задай вопрос ниже!</p>
+      `;
+      appendMessage('ai', welcomeHtml, '09:00');
+
+      appendMessage('user', 'Объясни, что такое машинное обучение, и составь план изучения на 2 недели', '09:01');
+
+      const demoResponse = `
+        <h4>Что такое машинное обучение?</h4>
+        <p>Машинное обучение (ML) — это раздел искусственного интеллекта, где компьютер <strong>учится на данных</strong>, а не следует жёстким правилам. Представь, что ты учишь ребёнка отличать яблоки от апельсинов: показываешь примеры, и со временем он сам начинает узнавать.</p>
+        <p><strong>Три основных типа:</strong></p>
+        <ul>
+          <li><strong>Обучение с учителем</strong> — есть правильные ответы (классификация, регрессия)</li>
+          <li><strong>Обучение без учителя</strong> — ищем скрытые паттерны (кластеризация)</li>
+          <li><strong>Обучение с подкреплением</strong> — агент учится через награды (игры, роботы)</li>
+        </ul>
+        <h4>План изучения ML за 2 недели</h4>
+        <div class="plan-card">
+          <table>
+            <thead>
+              <tr><th>Неделя</th><th>Дни</th><th>Тема</th><th>Pomodoro</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Пн–Вт</td><td>Python + NumPy, Pandas</td><td>8 × 25 мин</td></tr>
+              <tr><td>1</td><td>Ср–Чт</td><td>Линейная алгебра, статистика</td><td>6 × 25 мин</td></tr>
+              <tr><td>1</td><td>Пт–Вс</td><td>Основы ML: регрессия, классификация</td><td>10 × 25 мин</td></tr>
+              <tr><td>2</td><td>Пн–Ср</td><td>Scikit-learn, практика</td><td>12 × 25 мин</td></tr>
+              <tr><td>2</td><td>Чт–Пт</td><td>Нейронные сети (введение)</td><td>8 × 25 мин</td></tr>
+              <tr><td>2</td><td>Сб–Вс</td><td>Мини-проект + повторение</td><td>6 × 25 мин</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn" data-action="Расскажи подробнее про обучение с учителем">📖 Подробнее про обучение с учителем</button>
+          <button class="action-btn" data-action="Дай тестовый вопрос по основам ML">🧪 Тестовый вопрос</button>
+          <button class="action-btn" data-action="Составь расписание на сегодня по этому плану">📅 Расписание на сегодня</button>
+        </div>
+      `;
+      appendMessage('ai', demoResponse, '09:02');
+    }
+
+    async function callGeminiAPI() {
+      const systemPrompt = MODES[currentMode].system;
+      const contents = conversationHistory.map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: contents,
+          generationConfig: { maxOutputTokens: 4096 }
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        throw new Error(`API error ${response.status}: ${errText || response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Пустой ответ от API.';
+    }
+
+    async function sendMessage(text) {
+      const message = (text || messageInput.value).trim();
+      if (!message || isLoading) return;
+      if (message.length > 2000) return;
+
+      appendMessage('user', escapeHtml(message), formatTime());
+      conversationHistory.push({ role: 'user', content: message });
+
+      messageInput.value = '';
+      autoResizeTextarea();
+      updateCharCounter();
+
+      setLoading(true);
+      showTyping();
+
+      try {
+        const reply = await callGeminiAPI();
+        hideTyping();
+        appendMessage('ai', reply, formatTime());
+        conversationHistory.push({ role: 'assistant', content: reply });
+      } catch (err) {
+        hideTyping();
+        appendMessage('ai', `<p><strong>Ошибка:</strong> ${escapeHtml(err.message)}</p><p>Попробуйте отправить сообщение снова.</p>`, formatTime(), true);
+      } finally {
+        setLoading(false);
+        messageInput.focus();
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function getModeWelcomeHtml() {
+      const m = MODES[currentMode];
+      return `<p>Режим <strong>${m.title}</strong> активирован. ${m.desc}. Задайте вопрос или выберите подсказку ниже.</p>`;
+    }
+
+    function switchMode(mode) {
+      if (mode === currentMode) return;
+      currentMode = mode;
+
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      updateModeHeader();
+      renderQuickPrompts();
+      clearChat();
+      appendMessage('ai', getModeWelcomeHtml(), formatTime());
+    }
+
+    document.getElementById('modeNav').addEventListener('click', e => {
+      const btn = e.target.closest('.mode-btn');
+      if (btn) switchMode(btn.dataset.mode);
+    });
+
+    sendBtn.addEventListener('click', () => sendMessage());
+
+    messageInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    messageInput.addEventListener('input', () => {
+      autoResizeTextarea();
+      updateCharCounter();
+    });
+
+    updateModeHeader();
+    renderQuickPrompts();
+    loadWelcomeDemo();
+  </script>
+</body>
+</html>
